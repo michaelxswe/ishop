@@ -4,18 +4,27 @@
 
 This project provides a backend API for a shopping website, built using FastAPI and SQLAlchemy as the ORM to perform CRUD operations against a PostgreSQL database. It includes user registration, authentication with JWT tokens, cart management, purchase functionality, and a purchase history feature. The application is containerized using Docker and can be deployed on AWS Fargate for seamless scaling and management.
 
+
 ![ishop db](pics/ishop.png)
 
 ## Tech Stack
     1. FastAPI
+
     2. SQLAlchemy
+
     3. PostgreSQL
+
     4. Docker
+
     5. AWS Fargate
 
 ## Build
     1. clone this repo
+
     2. install docker desktop
+
     3. docker build -t ishop .
+
     4. docker-compose up
+    
     5. go to -> localhost:8000/doc
