@@ -7,5 +7,3 @@ app.include_router(router=root.router)
 app.include_router(router=user.router)
 app.include_router(router=security.router)
 app.include_router(router=item.router)
-
-

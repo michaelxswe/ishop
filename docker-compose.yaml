@@ -1,10 +1,10 @@
 version: '3'
 services:
   app:
-    image: ishop-img
+    image: 549759342292.dkr.ecr.us-east-2.amazonaws.com/ishop
     container_name: ishop-ctr
     ports:
-      - 8000:8000
+      - 8000:80
       
       
       
