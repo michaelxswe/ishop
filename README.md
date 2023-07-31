@@ -1,6 +1,6 @@
 # Shopping Website Backend API
 
-## URL http://3.17.10.48/docs
+<http://3.17.10.48/docs>
 
 This project provides a backend API for a shopping website, built using FastAPI and SQLAlchemy as the ORM to perform CRUD operations against a PostgreSQL database. It includes user registration, authentication with JWT tokens, cart management, purchase functionality, and a purchase history feature. The application is containerized using Docker and can be deployed on AWS Fargate for seamless scaling and management.
 
