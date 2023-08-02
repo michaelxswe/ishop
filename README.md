@@ -2,7 +2,8 @@
 
 <http://3.17.10.48/docs>
 
-This project provides a backend API for a shopping website, built using FastAPI and SQLAlchemy as the ORM to perform CRUD operations against a PostgreSQL database. It includes user registration, integration with JWT for secure sign in, shopping cart management, submitting orders, and accessing order history. The application is containerized using Docker and can be deployed on AWS Fargate for seamless scaling and management.
+This project provides a backend API for a shopping website, utilizing FastAPI and SQLAlchemy as the ORM to enable seamless CRUD operations with a PostgreSQL database. Implemented essential features, including user registration, secure sign-in with JWT integration, shopping cart management, order submission, and access to order history.
+
 
 ## Database Schemas
 
