@@ -5,7 +5,3 @@ services:
     container_name: ishop-ctr
     ports:
       - 8000:80
-      
-      
-      
-
