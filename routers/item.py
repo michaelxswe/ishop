@@ -1,264 +1,61 @@
-from db.session import get_session
-from fastapi import APIRouter, Depends, HTTPException, Response, status
-from models.cart_item import CartItem
-from models.item import Item
-from models.order import Order
-from models.order_item import OrderItem
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from database.session import get_session
 from schemas.cart import CartRead
 from schemas.item import ItemCreate, ItemRead
 from schemas.message import Message
 from schemas.order import OrderRead
-from sqlalchemy import desc, select
-from sqlalchemy.orm import Session
-from utils.logger import logger
-from utils.security import authenticate_token, validate_user
+from services.item_service import ItemService, get_item_service
+from utils.security import authenticate_token
+
+router = APIRouter(prefix='/api/item', tags=['item'])
 
 
-router = APIRouter(prefix="/api/item", tags=["item"])
+@router.post('/add-item', response_model=Message)
+async def add_item(data: ItemCreate, service: ItemService = Depends(get_item_service), session: Session = Depends(get_session)):
+    return service.add_item(data=data, session=session)
+    
+
+@router.get('/get-item/{item_id}', response_model=ItemRead)
+async def get_item(item_id: int, service: ItemService = Depends(get_item_service), session: Session = Depends(get_session)):
+    return service.get_item(item_id=item_id, session=session)
+    
+
+@router.get('/get-all-items', response_model=list[ItemRead])
+async def get_all_items(service: ItemService = Depends(get_item_service), session: Session = Depends(get_session)):
+    return service.get_all_items(session=session)
 
 
-@router.post("/add_item", response_model=Message)
-async def add_item(
-    data: ItemCreate, response: Response, session: Session = Depends(get_session)
-):
-    try:
-        if session.execute(select(Item).where(Item.name == data.name)).scalar() != None:
-            response.status_code = status.HTTP_409_CONFLICT
-            return Message(message="Name already exist")
+@router.get('/add-to-cart/{item_id}/{qty}', response_model=Message)
+async def add_to_cart(item_id: int, qty: int, user_id: int = Depends(authenticate_token), service: ItemService = Depends(get_item_service), session: Session = Depends(get_session)):
+    return service.add_to_cart(item_id=item_id, qty=qty, user_id=user_id, session=session)
+    
 
-        item = Item(**data.model_dump())
-        session.add(item)
-        session.commit()
-        logger.info(f"Item(id: {item.id}) is added")
-        return Message(message="Item is added")
-
-    except Exception as exc:
-        session.rollback()
-        logger.error(str(exc))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-        )
+@router.get('/remove-from-cart/{item_id}/{qty}', response_model=Message)
+async def remove_from_cart(item_id: int, qty: int, user_id: int = Depends(authenticate_token), service: ItemService = Depends(get_item_service), session: Session = Depends(get_session)):
+    return service.remove_from_cart(item_id=item_id, qty=qty, user_id=user_id, session=session)
 
 
-@router.get("/get_item{item_id}", response_model=ItemRead | Message)
-async def get_item(
-    item_id: int, response: Response, session: Session = Depends(get_session)
-):
-    try:
-        product = session.execute(
-            select(Item).where(Item.id == item_id, Item.deleted == False)
-        ).scalar()
+@router.get('/clear-cart/', response_model=Message)
+async def clear_cart(user_id: int = Depends(authenticate_token), service: ItemService = Depends(get_item_service), session: Session = Depends(get_session)):
+    return service.clear_cart(user_id=user_id, session=session)
+    
 
-        if product == None:
-            response.status_code = status.HTTP_404_NOT_FOUND
-            return Message(message="Item not found")
+@router.get('/show-cart', response_model=CartRead)
+async def show_cart(user_id: int = Depends(authenticate_token), service: ItemService = Depends(get_item_service), session: Session = Depends(get_session)):
+    return service.show_cart(user_id=user_id, session=session)
+    
 
-        return product
+@router.post('/submit-order', response_model=Message)
+async def submit_order(user_id: int = Depends(authenticate_token), service: ItemService = Depends(get_item_service), session: Session = Depends(get_session)):
+    return service.submit_order(user_id=user_id, session=session)
+    
 
-    except Exception as exc:
-        session.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-        )
+@router.get('/show-orders', response_model=list[OrderRead])
+async def show_orders(user_id: int = Depends(authenticate_token), service: ItemService = Depends(get_item_service), session: Session = Depends(get_session)):
+    return service.show_orders(user_id=user_id, session=session)
 
 
-@router.get("/get_all_items", response_model=list[ItemRead] | Message)
-async def get_all_products(session: Session = Depends(get_session)):
-    try:
-        all_products = (
-            session.execute(select(Item).where(Item.deleted == False))
-            .scalars()
-            .fetchall()
-        )
-        return all_products
-
-    except Exception as exc:
-        session.rollback()
-        logger.error(str(exc))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-        )
-
-
-@router.get("/add_to_cart/{item_id}/{qty}", response_model=Message)
-async def add_to_cart(
-    item_id: int,
-    qty: int,
-    response: Response,
-    user_id: int = Depends(authenticate_token),
-    session: Session = Depends(get_session),
-):
-    curr_user = validate_user(user_id=user_id, session=session)
-    try:
-        item = session.execute(
-            select(Item).where(Item.id == item_id, Item.deleted == False)
-        ).scalar()
-
-        if item == None:
-            response.status_code = status.HTTP_404_NOT_FOUND
-            return Message(message="Item not found")
-
-        if item.qty < qty:
-            response.status_code = status.HTTP_406_NOT_ACCEPTABLE
-            return Message(message="No enough items in stock")
-
-        cart_item = session.execute(
-            select(CartItem).where(
-                CartItem.cart_id == curr_user.cart.id, CartItem.item_id == item_id
-            )
-        ).scalar()
-        if cart_item == None:
-            new_cart_item = CartItem(
-                cost=qty * item.price, qty=qty, item=item, cart=curr_user.cart
-            )
-            session.add(new_cart_item)
-
-        else:
-            cart_item.qty += qty
-            cart_item.cost = cart_item.qty * item.price
-
-        curr_user.cart.cost += qty * item.price
-
-        session.commit()
-        return Message(message="Added to cart")
-
-    except Exception as exc:
-        session.rollback()
-        logger.error(str(exc))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-        )
-
-
-@router.get("/remove_from_cart/{item_id}/{qty}", response_model=Message)
-async def remove_from_cart(
-    item_id: int,
-    qty: int,
-    response: Response,
-    user_id: int = Depends(authenticate_token),
-    session: Session = Depends(get_session),
-):
-    curr_user = validate_user(user_id=user_id, session=session)
-    try:
-        cart_item = session.execute(
-            select(CartItem).where(
-                CartItem.cart_id == curr_user.cart.id, CartItem.item_id == item_id
-            )
-        ).scalar()
-        if cart_item == None:
-            response.status_code = status.HTTP_404_NOT_FOUND
-            return Message(message="Product not found")
-
-        qty = min(qty, cart_item.qty)
-
-        cart_item.qty -= qty
-        cart_item.cost -= qty * cart_item.item.price
-        curr_user.cart.cost -= qty * cart_item.item.price
-
-        if cart_item.qty <= 0:
-            session.delete(cart_item)
-
-        session.commit()
-        return Message(message="Removed from cart")
-
-    except Exception as exc:
-        session.rollback()
-        logger.error(str(exc))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-        )
-
-
-@router.get("/show_cart", response_model=CartRead)
-async def show_cart(
-    user_id: int = Depends(authenticate_token), session: Session = Depends(get_session)
-):
-    curr_user = validate_user(user_id=user_id, session=session)
-    try:
-        return curr_user.cart
-
-    except Exception as exc:
-        session.rollback()
-        logger.error(str(exc))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-        )
-
-
-@router.post("/submit_order", response_model=Message)
-async def submit_order(
-    response: Response,
-    user_id: int = Depends(authenticate_token),
-    session: Session = Depends(get_session),
-):
-    curr_user = validate_user(user_id=user_id, session=session)
-    try:
-        if len(curr_user.cart.cart_items) == 0:
-            response.status_code = status.HTTP_404_NOT_FOUND
-            return Message(message="Empty cart")
-
-        order = Order(user=curr_user)
-        items = curr_user.cart.cart_items
-        curr_user.cart.cost = 0
-
-        for item in items:
-            item.item.qty -= item.qty
-            item.item.sale += item.qty
-
-            order_item = OrderItem(
-                cost=item.cost, qty=item.qty, item=item.item, order=order
-            )
-            order.cost += order_item.cost
-            session.add(order_item)
-            session.delete(item)
-
-        session.add(order)
-        session.commit()
-        return Message(message="Order is submitted")
-
-    except Exception as exc:
-        session.rollback()
-        logger.error(str(exc))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-        )
-
-
-@router.get("/show_orders", response_model=list[OrderRead])
-async def show_orders(
-    user_id: int = Depends(authenticate_token),
-    session: Session = Depends(get_session),
-):
-    curr_user = validate_user(user_id=user_id, session=session)
-    try:
-        return curr_user.orders
-
-    except Exception as exc:
-        session.rollback()
-        logger.error(str(exc))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-        )
-
-
-@router.get("/get_popular_items/{limit}", response_model=list[ItemRead])
-async def get_popular_products(limit: int, session: Session = Depends(get_session)):
-    try:
-        items = (
-            session.execute(
-                select(Item)
-                .where(Item.deleted == False)
-                .limit(limit)
-                .order_by(desc(Item.sale))
-            )
-            .scalars()
-            .fetchall()
-        )
-        return items
-
-    except Exception as exc:
-        session.rollback()
-        logger.error(str(exc))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-        )
+@router.get('/get-popular-items/{limit}', response_model=list[ItemRead])
+async def get_popular_items(limit: int, service: ItemService = Depends(get_item_service), session: Session = Depends(get_session)):
+    return service.get_popular_items(limit=limit, session=session)

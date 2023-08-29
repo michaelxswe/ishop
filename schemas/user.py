@@ -22,6 +22,7 @@ class UserCreate(Base):
       
       return self
 
+
 class UserUpdate(Base):
    username: Optional[str] = Field(default=None)
    password: Optional[str] = Field(default=None, min_length=10, max_length=20)
