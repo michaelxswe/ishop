@@ -1,6 +1,6 @@
 # Shopping Website Backend API
 
-<http://13.59.235.114/docs>
+<http://3.15.183.9/docs>
 
 This project provides a backend API for a shopping website, utilizing FastAPI and SQLAlchemy as the ORM to enable seamless CRUD operations with a PostgreSQL database. Implemented essential features, including user registration, secure sign-in with JWT integration, shopping cart management, order submission, and access to order history.
 
