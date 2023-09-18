@@ -1,4 +1,4 @@
-# Shopping Website Backend API
+# Shopify Clone Backend
 
 <http://3.15.183.9/docs>
 
