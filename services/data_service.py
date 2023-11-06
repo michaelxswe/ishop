@@ -5,28 +5,30 @@ from schemas.message import Message
 from utils.logger import logger
 
 
-class DatabaseService:
-    def create_database(self) -> Message:
+class DataService:
+    def init_data(self) -> Message:
         try:
             Base.metadata.create_all(bind=engine)
-            logger.info('Database is created')
-            return Message(message='Database is created')
+            message = 'Data is initalized'
+            logger.info(message)
+            return Message(message=message)
 
         except Exception as exc:
             logger.error(str(exc))
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
         
 
-    def delete_database(self) -> Message:
+    def clear_data(self) -> Message:
         try:
             Base.metadata.drop_all(bind=engine)
-            logger.info('Database is deleted')
-            return Message(message='Database is deleted')
+            message = 'Data is cleared'
+            logger.info(message)
+            return Message(message=message)
 
         except Exception as exc:
             logger.error(str(exc))
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
         
 @lru_cache
-def get_database_servicea():
-    return DatabaseService()
+def get_data_service():
+    return DataService()

@@ -7,12 +7,12 @@ from models.payment import Payment
 from models.user import User
 from schemas.message import Message
 from schemas.user import UserCreate, UserUpdate
-from utils.enums import Role
+from common.enums import Role
 from utils.logger import logger
-from utils.security import bcrypt_context, get_curr_user
+from utils.validation import bcrypt_context, get_curr_user
 
 
-class UserService:
+class UsersService:
 
     def create_user(self, data: UserCreate, session: Session) -> Message:
         try:
@@ -58,10 +58,10 @@ class UserService:
             logger.error(str(exc))
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
     
-    def get_all_users(self, session: Session) -> list[User]:
+    def get_users(self, session: Session) -> list[User]:
         try:
-            all_users = session.execute(select(User)).scalars().fetchall()
-            return all_users
+            users = session.execute(select(User)).scalars().fetchall()
+            return users
 
         except Exception as exc:
             session.rollback()
@@ -110,5 +110,5 @@ class UserService:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
         
 @lru_cache
-def get_user_service():
-    return UserService()
+def get_users_service():
+    return UsersService()

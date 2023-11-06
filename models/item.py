@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import VARCHAR, BIGINT, NUMERIC, TIMESTAMP, ENUM, BOOLEAN
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import TYPE_CHECKING
-from utils.enums import Category
+from common.enums import Category
 if TYPE_CHECKING:
     from models.cart_item import CartItem
     from models.order_item import OrderItem

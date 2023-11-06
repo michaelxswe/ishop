@@ -1,6 +1,6 @@
 from typing import Optional
 from datetime import datetime
-from utils.enums import Category
+from common.enums import Category
 from schemas.base import Base
 
 class ItemCreate(Base):
