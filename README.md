@@ -1,6 +1,6 @@
 # Shopify Clone Backend
 
-This project provides a backend API for a shopping website, utilizing FastAPI and SQLAlchemy as the ORM to enable seamless CRUD operations with a PostgreSQL database. Implemented essential features, including user registration, secure sign-in with JWT integration, shopping cart management, order submission, and access to order history.
+This project provides a complete backend API for a shopping app, featuring user registration, secure login via JWT, cart management, and order processing with historical tracking.
 
 
 ## Database Schemas
