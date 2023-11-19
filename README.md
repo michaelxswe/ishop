@@ -1,6 +1,6 @@
 # Shopping App Backend
 
-This project provides a complete backend API for a shopping app, featuring user registration, secure login via JWT, cart management, and order processing with historical tracking.
+This project provides a complete RESTful API for a shopping app, featuring user registration, secure login via JWT, cart management, and order processing with historical tracking.
 
 <http://18.119.129.40/docs>
 
